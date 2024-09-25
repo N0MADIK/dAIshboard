@@ -28,9 +28,11 @@ export function Display() {
 
 
 
-    const addPlot = () => {
-        axiosInstance.get(`/plot`)
-            .then(({ data }) => {
+    const addPlot = (query: string) => {
+        const dt = { "user_query": query }
+        axiosInstance.post(`/generate_plot`, dt)
+            .then((response) => {
+                let data = JSON.parse(response.data.plot_json);
                 let index = plots.length;
                 let newPlots = plots.map(l => Object.assign({}, l));
                 newPlots.push(
@@ -48,7 +50,9 @@ export function Display() {
                     }
                 )
                 setPlots(newPlots);
-            });
+            }).catch((err) => {
+                console.error('Error:', err);
+            });;
 
     }
 

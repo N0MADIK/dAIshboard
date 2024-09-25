@@ -36,6 +36,7 @@ class PlotArea extends React.Component<PlotData> {
             this.removePlotAt = nextProps.removePlotAt;
         }
     }
+
     render() {
         return <Rnd
             size={{ width: this.state.width, height: this.state.height }}

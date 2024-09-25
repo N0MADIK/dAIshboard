@@ -5,14 +5,16 @@ import { useState } from "react";
 
 interface ChatBoxProps {
     removePlots: () => void
-    addPlot: () => void
+    addPlot: (query: string) => void
 }
 export function Chatbox(props: ChatBoxProps) {
     const { removePlots, addPlot } = props;
     const [query, setQuery] = useState<string>("");
 
-    const TestAddPlot = () => {
+    const plotFromQuery = () => {
         console.log("Query:", query);
+        addPlot(query);
+        setQuery("");
     }
 
     return <div className="w-screen">
@@ -23,7 +25,7 @@ export function Chatbox(props: ChatBoxProps) {
             <Button onClick={removePlots}
             >Remove All Plots</Button>
             <br />
-            <Button onClick={TestAddPlot}>
+            <Button onClick={plotFromQuery}>
                 Add New Plot
             </Button>
         </div>
