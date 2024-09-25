@@ -14,11 +14,20 @@ export function Chatbox(props: ChatBoxProps) {
     const plotFromQuery = () => {
         console.log("Query:", query);
         addPlot(query);
+        document.getElementById("queryBox").value = "";
         setQuery("");
     }
 
+    const keyDownFnc = (event) => {
+        if (event.which === 13) {
+            if (!event.repeat) {
+                plotFromQuery();
+            }
+        }
+    }
+
     return <div className="w-screen">
-        <Textarea className="w-11/12 h-1/2" placeholder="Query goes here" onChange={(e) => {
+        <Textarea id='queryBox' className="w-11/12 h-1/2" placeholder="Query goes here" onKeyDown={keyDownFnc} onChange={(e) => {
             setQuery(e.target.value);
         }} />
         <div className="flex flex-row-2">

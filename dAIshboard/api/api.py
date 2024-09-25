@@ -33,9 +33,7 @@ def generate():
     request_body = request.json
     user_query = request_body.get("user_query", "")
     if user_query:
-        print("User Query Found!!", user_query, flush=True)
         return_json = generate_from_user_query(user_query)
-        print("Return Json is!!", return_json, flush=True)
         return return_json
     return {"error": "No user query"}
 
