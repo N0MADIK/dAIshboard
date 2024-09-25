@@ -3,7 +3,6 @@
 import { NavLink } from "react-router-dom";
 
 const NavBar = () => {
-    console.log("HERE!")
     return (
         <nav>
             <ul>

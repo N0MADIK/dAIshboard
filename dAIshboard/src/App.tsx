@@ -11,18 +11,16 @@ const Canvas = lazy(() => import('./components/canvas/index.tsx'));
 function App() {
 
   return (
-    <>
-      <div>
-        <Suspense fallback={<div className="container">Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/canvas" element={<Canvas />} />
-          </Routes>
-        </Suspense>
-      </div>
-    </>
+    <div className='flex w-screen'>
+      <Suspense fallback={<div className="container">Loading...</div>}>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/canvas" element={<Canvas />} />
+        </Routes>
+      </Suspense>
+    </div>
   )
 }
 
