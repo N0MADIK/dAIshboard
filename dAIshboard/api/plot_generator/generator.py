@@ -1,15 +1,10 @@
 import pandas as pd
-import os
 import openai
 import json
-import plotly.io as pio
 from uuid import uuid4
 import inspect
-import logging
 
-DATA_PATH = "/home/kg2911/dev/dAIshboard/dAIshboard/api/plot_generator/data/"
-META_PATH = "/home/kg2911/dev/dAIshboard/dAIshboard/api/plot_generator/meta/"
-
+from .. import DATA_PATH, META_PATH
 
 stock = pd.read_excel(DATA_PATH + "Stock_Cluster.xlsx")
 product = pd.read_excel(DATA_PATH + "product.xlsx")
