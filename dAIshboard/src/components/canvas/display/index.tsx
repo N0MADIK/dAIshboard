@@ -33,7 +33,7 @@ export function Display() {
                 let newPlots = plots.map(l => Object.assign({}, l));
                 newPlots.push(
                     {
-                        id: `TEST ${index}`,
+                        id: `Plot ${index + 1}`,
                         width: data.layout.width,
                         height: data.layout.height,
                         x: 0,

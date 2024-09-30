@@ -41,7 +41,7 @@ class PlotArea extends React.Component<PlotData> {
         return <Rnd
             size={{ width: this.state.width, height: this.state.height }}
             position={{ x: this.state.x, y: this.state.y }}
-            onDragStop={(e, d) => { this.setState({ x: d.x, y: d.y }) }}
+            onDragStop={(e, d) => { console.log("HERE", e, d); this.setState({ x: d.x, y: d.y }) }}
             onResize={(e, direction, ref, delta, position) => {
                 const newLayout = { ...this.state.layout, height: ref.offsetHeight, width: ref.offsetWidth };
                 this.setState({
@@ -51,10 +51,11 @@ class PlotArea extends React.Component<PlotData> {
                 });
             }}
             bounds=".showArea"
+            dragHandleClassName="handle"
         >
             <div className=''>
                 <div className='flex bg-gray-50'>
-                    <div className='flex items-center justify-center w-11/12'>
+                    <div className='handle flex items-center justify-center w-11/12'>
                         <h1>{this.state.id}</h1>
                     </div>
                     <div className='flex items-center justify-center w-1/12 w-fit text-red-900 font-bold'>
