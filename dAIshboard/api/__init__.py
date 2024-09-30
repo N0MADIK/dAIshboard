@@ -1,2 +1,5 @@
-DATA_PATH = "/home/kg2911/dev/dAIshboard/dAIshboard/api/data/"
-META_PATH = "/home/kg2911/dev/dAIshboard/dAIshboard/api/meta/"
+from pathlib import Path
+
+BASE_PATH = f"{Path(__file__).parent}"
+DATA_PATH = f"{BASE_PATH}/data/"
+META_PATH = f"{BASE_PATH}/meta/"

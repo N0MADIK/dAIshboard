@@ -4,12 +4,13 @@ from flask_cors import CORS, cross_origin
 from .plot_generator.generator import generate_from_user_query
 from .utils import get_project_metadata
 from .database import db
-from .database.utils import get_user, add_user
+from .database.utils import get_user, add_user, get_projects, add_project
+from pathlib import Path
 
 app = Flask(__name__, static_folder="../build", static_url_path="/")
 cors = CORS(app)
 app.config["CORS_HEADERS"] = "Content-Type"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///./dAIshboard.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{Path(__file__).parent / 'site.db'}"
 
 db.init_app(app)
 with app.app_context():
@@ -40,7 +41,6 @@ def register_user():
         success = add_user(name, email, password)
     except Exception as e:
         error = str(e)
-    print("HERE!!!", success, error)
     return {"success": success, "error": error}
 
 
@@ -59,22 +59,24 @@ def login():
 @app.route("/projects/<user_id>", methods=["GET"])
 @cross_origin()
 def get_projects_list(user_id: str):
-    projects = [
-        {
-            "id": "728ed52f",
-            "name": "Test",
-            "owner": "Tester",
-            "created_on": "09-18-2024",
-        }
+    projects = get_projects(user_id)
+    return_dict = [
+        {"id": p.id, "owner": p.user.name, "name": p.name, "created_on": p.created_on}
+        for p in projects
     ]
-    return projects
+    return return_dict
 
 
 @app.route("/projects/<user_id>/add", methods=["POST"])
 @cross_origin()
 def add_new_project_to_user(user_id: str):
     request_body = request.json
-    return {"success": True, "error": ""}
+    success, error = False, ""
+    try:
+        success, error = add_project(user_id, request_body)
+    except Exception as e:
+        error = str(e)
+    return {"success": success, "error": error}
 
 
 @app.route("/projects/<user_id>/<project_id>/metadata", methods=["GET"])
