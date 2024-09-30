@@ -19,17 +19,6 @@ def index():
     return app.send_static_file("index.html")
 
 
-@app.route("/generate_plot", methods=["POST"])
-@cross_origin()
-def generate():
-    request_body = request.json
-    user_query = request_body.get("user_query", "")
-    if user_query:
-        return_json = generate_from_user_query(user_query)
-        return return_json
-    return {"error": "No user query"}
-
-
 @app.route("/register", methods=["POST"])
 @cross_origin()
 def register_user():
@@ -81,3 +70,21 @@ def get_canvas_metadata(user_id: str, project_id: str):
     return_obj = {"data": [], "error": ""}
     return_obj["data"] = get_project_metadata(project_id, user_id)
     return return_obj
+
+
+@app.route("/upload/data/<user_id>/<project_id>", methods=["POST"])
+@cross_origin()
+def upload_data(user_id: str, project_id: str):
+    request_file = request.files.get("file")
+    return {"success": True, "error": ""}
+
+
+@app.route("/generate_plot/<user_id>/<project_id>", methods=["POST"])
+@cross_origin()
+def generate(user_id: str, project_id: str):
+    request_body = request.json
+    user_query = request_body.get("user_query", "")
+    if user_query:
+        return_json = generate_from_user_query(user_query)
+        return return_json
+    return {"error": "No user query"}

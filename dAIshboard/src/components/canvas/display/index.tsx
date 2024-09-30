@@ -2,14 +2,15 @@
 
 import { ShowArea } from "./showArea";
 import { Chatbox } from "./chatbox";
-
-import { useState, useRef, useEffect } from 'react';
+import { useParams } from 'react-router-dom'
+import { useState } from 'react';
 import { PlotData } from "./plot"
 import { axiosInstance } from "@/lib/utils";
 
 
 export function Display() {
     const [plots, setPlots] = useState<PlotData[]>([]);
+    const { user_id, project_id } = useParams()
 
     const removePlot = () => {
         console.log("Remove Plots called");
@@ -25,7 +26,7 @@ export function Display() {
 
     const addPlot = (query: string) => {
         const dt = { "user_query": query }
-        axiosInstance.post(`/generate_plot`, dt)
+        axiosInstance.post(`/generate_plot/${user_id}/${project_id}`, dt)
             .then((response) => {
                 let data = JSON.parse(response.data.plot_json);
                 let index = plots.length;
