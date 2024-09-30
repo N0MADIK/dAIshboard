@@ -30,7 +30,7 @@ const Login: React.FC = () => {
                     setError(''); // Clear error if login is successful
                     navigate(`/projects/${data.user_id}`); // Change '/dashboard' to your desired route
                 } else {
-                    setError('Email and password are required');
+                    setError(data.error);
                 }
             })
     };

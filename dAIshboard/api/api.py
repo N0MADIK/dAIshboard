@@ -3,10 +3,17 @@ from flask_cors import CORS, cross_origin
 
 from .plot_generator.generator import generate_from_user_query
 from .utils import get_project_metadata
+from .database import db
+from .database.utils import get_user, add_user
 
 app = Flask(__name__, static_folder="../build", static_url_path="/")
 cors = CORS(app)
 app.config["CORS_HEADERS"] = "Content-Type"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///./dAIshboard.db"
+
+db.init_app(app)
+with app.app_context():
+    db.create_all()  # Create database tables
 
 
 @app.errorhandler(404)
@@ -28,7 +35,13 @@ def register_user():
     password = request_body.get("password", "")
     if not name or not email or not password:
         return {"success": False, "error": "Invalid Input!"}
-    return {"success": True, "error": ""}
+    success, error = False, ""
+    try:
+        success = add_user(name, email, password)
+    except Exception as e:
+        error = str(e)
+    print("HERE!!!", success, error)
+    return {"success": success, "error": error}
 
 
 @app.route("/login", methods=["POST"])
@@ -37,10 +50,10 @@ def login():
     request_body = request.json
     email = request_body.get("email", "")
     password = request_body.get("password", "")
-
-    if not email or not password:
+    user = get_user(email, password)
+    if not user:
         return {"success": False, "error": "Login Failed!", "user_id": ""}
-    return {"success": True, "user_id": "1", "error": ""}
+    return {"success": True, "user_id": user.id, "error": ""}
 
 
 @app.route("/projects/<user_id>", methods=["GET"])
