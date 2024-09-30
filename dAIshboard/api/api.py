@@ -55,3 +55,24 @@ def login():
     if not email or not password:
         return {"success": False, "error": "Login Failed!", "user_id": ""}
     return {"success": True, "user_id": "1", "error": ""}
+
+
+@app.route("/projects/<user_id>", methods=["GET"])
+@cross_origin()
+def get_projects_list(user_id: str):
+    projects = [
+        {
+            "id": "728ed52f",
+            "name": "Test",
+            "owner": "Tester",
+            "created_on": "09-18-2024",
+        }
+    ]
+    return projects
+
+
+@app.route("/projects/<user_id>/add", methods=["POST"])
+@cross_origin()
+def add_new_project_to_user(user_id: str):
+    request_body = request.json
+    return {"success": True, "error": ""}
