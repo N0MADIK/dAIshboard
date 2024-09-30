@@ -3,14 +3,9 @@
 import { ShowArea } from "./showArea";
 import { Chatbox } from "./chatbox";
 
-import axios from 'axios';
 import { useState, useRef, useEffect } from 'react';
 import { PlotData } from "./plot"
-
-
-const axiosInstance = axios.create({
-    baseURL: 'http://localhost:5000',
-});
+import { axiosInstance } from "@/lib/utils";
 
 
 export function Display() {

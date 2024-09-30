@@ -22,11 +22,6 @@ def index():
     return app.send_static_file("index.html")
 
 
-@app.route("/api/time")
-def get_current_time():
-    return {"time": time.time()}
-
-
 @app.route("/generate_plot", methods=["POST"])
 @cross_origin()
 def generate():
@@ -38,17 +33,25 @@ def generate():
     return {"error": "No user query"}
 
 
-@app.route("/plot")
+@app.route("/register", methods=["POST"])
 @cross_origin()
-def plot_test():
-    df = pd.DataFrame(
-        {
-            "Fruit": ["Apples", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
-            "Amount": [4, 1, 2, 2, 4, 5],
-            "City": ["SF", "SF", "SF", "Montreal", "Montreal", "Montreal"],
-        }
-    )
-    fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="stack", title="Test")
-    fig.update_layout(title_x=0.5)
-    graphJSON = plotly.io.to_json(fig, pretty=True)
-    return graphJSON
+def register_user():
+    request_body = request.json
+    name = request_body.get("name", "")
+    email = request_body.get("email", "")
+    password = request_body.get("password", "")
+    if not name or not email or not password:
+        return {"success": False, "error": "Invalid Input!"}
+    return {"success": True, "error": ""}
+
+
+@app.route("/login", methods=["POST"])
+@cross_origin()
+def login():
+    request_body = request.json
+    email = request_body.get("email", "")
+    password = request_body.get("password", "")
+
+    if not email or not password:
+        return {"success": False, "error": "Login Failed!", "user_id": ""}
+    return {"success": True, "user_id": "1", "error": ""}

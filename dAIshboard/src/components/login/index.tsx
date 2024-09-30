@@ -1,7 +1,10 @@
 // src/components/Login.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { RegisterDialog } from "./register";
+import { UserContext, axiosInstance } from "@/lib/utils";
+
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -9,16 +12,27 @@ const Login: React.FC = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
+    const { setData } = useContext(UserContext);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // Simulate a login process
-        if (email === '' || password === '') {
-            setError('Email and password are required');
-            return;
-        }
-        // Handle login logic here
-        setError(''); // Clear error if login is successful
-        navigate('/projects'); // Change '/dashboard' to your desired route
+        const data = { "email": email, "password": password }
+        axiosInstance.post("/login", data)
+            .then((response) => {
+                let data = response.data;
+                if (data.success === true) {
+                    // Handle login logic here
+                    setData({
+                        "user": "TEST",
+                        "id": response.data.user_id
+                    })
+                    setError(''); // Clear error if login is successful
+                    navigate(`/projects/${data.user_id}`); // Change '/dashboard' to your desired route
+                } else {
+                    setError('Email and password are required');
+                }
+            })
     };
 
     return (
@@ -58,12 +72,15 @@ const Login: React.FC = () => {
                         className="w-full p-2 border border-gray-300 rounded"
                     />
                 </div>
-                <button
-                    type="submit"
-                    className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
-                >
-                    Login
-                </button>
+                <div className='flex flex-col-1 p-2'>
+                    <button
+                        type="submit"
+                        className="w-full bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                    >
+                        Login
+                    </button>
+                    <RegisterDialog />
+                </div>
             </form>
         </div>
     );
