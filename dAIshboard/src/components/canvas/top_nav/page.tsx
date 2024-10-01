@@ -2,7 +2,7 @@
 import { useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-
+import { MetaNav } from '../meta_nav/page';
 
 
 export function TopNav() {
@@ -14,5 +14,8 @@ export function TopNav() {
         navigate(url);
     }
 
-    return <Button onClick={goToProjects}>Projects</Button>
+    return <div className='flex flex-col-1'>
+        <Button onClick={goToProjects}>Projects</Button>
+        <MetaNav />
+    </div>
 }

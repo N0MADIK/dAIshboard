@@ -4,6 +4,12 @@ import FileExplorer, { FileItem } from './explorer';
 import { axiosInstance } from '@/lib/utils';
 import { useParams } from 'react-router-dom'
 import { UploadFileDialog } from './uploadFile';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { Button } from "@/components/ui/button"
 
 export function MetaNav() {
 
@@ -26,8 +32,14 @@ export function MetaNav() {
         })
     }, [])
     return <div>
-        <UploadFileDialog />
-
-        <FileExplorer items={projectMeta} />
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button>Menu</Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 bg-blue-500">
+                <UploadFileDialog />
+                <FileExplorer items={projectMeta} />
+            </PopoverContent>
+        </Popover>
     </div>
 }

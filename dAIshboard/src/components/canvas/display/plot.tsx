@@ -12,7 +12,8 @@ export interface PlotData {
     layout: any,
     frames: any[],
     config: any,
-    index: number
+    index: number,
+    ts: number
 }
 
 export interface PlotProps {
