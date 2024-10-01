@@ -28,15 +28,9 @@ class PlotArea extends React.Component<PlotData> {
     constructor(props: any) {
         super(props);
         this.state = props.state;
-        this.removePlotAt = props.removePlotAt;
     }
 
 
-    componentDidUpdate(nextProps: PlotProps) {
-        if (nextProps.removePlotAt !== this.removePlotAt) {
-            this.removePlotAt = nextProps.removePlotAt;
-        }
-    }
 
     render() {
         return <Rnd
@@ -63,7 +57,7 @@ class PlotArea extends React.Component<PlotData> {
                         <button
                             onClick={
                                 (e) => {
-                                    this.removePlotAt(this.state);
+                                    this.props.removePlotAt(this.state);
                                 }
                             }
                         >X</button>
