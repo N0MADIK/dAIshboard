@@ -16,7 +16,6 @@ export function Display() {
     let [error, setError] = useState<string | null>(null);
 
     const removePlot = () => {
-        console.log("Remove Plots called");
         setPlots([])
     }
 
@@ -41,13 +40,24 @@ export function Display() {
                 } else {
                     let data = JSON.parse(response.data.plot_json);
                     let plot_id = response.data.plot_id;
-                    let index = plots.length;
+                    let new_plot_id = `Plot ${plot_id}`
                     let newPlots = plots.map(l => Object.assign({}, l));
-                    newPlots = newPlots.filter((p) => { return p.id !== (`Plot ${plot_id}`) })
+                    let exisitng_plot = newPlots.find((p) => { return p.id === new_plot_id })
                     data.layout.width = 300;
                     data.layout.height = 300;
+                    let index = plots.length;
                     let x = data.layout.width * Math.floor(index / 1);
                     let y = data.layout.height * (index % 1);
+                    console.log("existing plot!!!!", exisitng_plot);
+                    if (exisitng_plot !== undefined) {
+                        data.layout.width = exisitng_plot.layout.width;
+                        data.layout.height = exisitng_plot.layout.height;
+                        index = exisitng_plot.index;
+                        x = exisitng_plot.x;
+                        y = exisitng_plot.y;
+                    }
+
+                    newPlots = newPlots.filter((p) => { return p.id !== new_plot_id })
                     newPlots.push(
                         {
                             id: `Plot ${plot_id}`,

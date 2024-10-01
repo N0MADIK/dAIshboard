@@ -15,7 +15,7 @@ const override: CSSProperties = {
 };
 
 export function ShowArea(props: ShowAreaProps) {
-    let SpinnerColor = "#ffffff";
+    let SpinnerColor = "#000000";
 
     var { plots, removePlotAt, loading } = props;
 
