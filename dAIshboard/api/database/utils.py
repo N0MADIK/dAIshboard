@@ -91,7 +91,12 @@ def get_existing_plots(user_id: str, project_id: str):
         .order_by(PlotMetaData.id.desc())
         .distinct(PlotMetaData.plot_id)
     )
-    return results
+    ids, return_list = set(), []
+    for p in results:
+        if p.plot_id not in ids:
+            ids.add(p.plot_id)
+            return_list.append(p)
+    return return_list
 
 
 def get_latest_user_info_for_plot(plot_id: str, user_id: str, project_id: str):
