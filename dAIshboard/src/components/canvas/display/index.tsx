@@ -3,7 +3,7 @@
 import { ShowArea } from "./showArea";
 import { Chatbox } from "./chatbox";
 import { useParams } from 'react-router-dom'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PlotData } from "./plot"
 import { axiosInstance } from "@/lib/utils";
 
@@ -19,9 +19,48 @@ export function Display() {
         setPlots([])
     }
 
+    useEffect(() => {
+        axiosInstance.get(`/all_plots/${user_id}/${project_id}`).then((response) => {
+            let data = response.data;
+            let newPlots = [];
+            for (let index = 0; index < data.length; index++) {
+                let p = JSON.parse(data[index].json);
+                let plot_id = data[index].id;
+                p.layout.width = 300;
+                p.layout.height = 300;
+                let x = p.layout.width * Math.floor(index / 1);
+                let y = p.layout.height * (index % 1);
+                newPlots.push(
+                    {
+                        id: `Plot ${plot_id}`,
+                        width: p.layout.width,
+                        height: p.layout.height,
+                        x: x,
+                        y: y,
+                        data: p.data,
+                        layout: p.layout,
+                        frames: [],
+                        config: {},
+                        index: index,
+                        ts: Date.now()
+                    }
+                )
+
+            }
+            setPlots(newPlots);
+            setError(null);
+        })
+    }, [])
+
+
+
+
     const removePlotAt = (data: PlotData) => {
-        let newPlots = plots.map(l => Object.assign({}, l)).filter(item => item.id !== data.id);
-        setPlots(newPlots);
+        let plot_id = data.id.split(" ")[1];
+        axiosInstance.delete(`/delete_plot/${user_id}/${project_id}/${plot_id}`).then((_response) => {
+            let newPlots = plots.map(l => Object.assign({}, l)).filter(item => item.id !== data.id);
+            setPlots(newPlots);
+        });
     }
 
 

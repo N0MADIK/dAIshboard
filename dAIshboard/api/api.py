@@ -4,7 +4,14 @@ from flask_cors import CORS, cross_origin
 from .plot_generator.generator import generate_from_user_query
 from .utils import get_project_metadata, add_project_data
 from .database import db
-from .database.utils import get_user, add_user, get_projects, add_project
+from .database.utils import (
+    get_user,
+    add_user,
+    get_projects,
+    add_project,
+    get_existing_plots,
+    delete_plot_in_user_project,
+)
 from pathlib import Path
 
 app = Flask(__name__, static_folder="../build", static_url_path="/")
@@ -109,3 +116,19 @@ def generate(user_id: str, project_id: str):
         return_json = generate_from_user_query(user_query, user_id, project_id)
         return return_json
     return {"error": "No user query"}
+
+
+@app.route("/all_plots/<user_id>/<project_id>", methods=["GET"])
+@cross_origin()
+def get_all_plots(user_id: str, project_id: str):
+    all_plots = get_existing_plots(user_id, project_id)
+    plot_jsons = [{"id": p.plot_id, "json": p.plot_json} for p in all_plots]
+    print(len(plot_jsons))
+    return plot_jsons
+
+
+@app.route("/delete_plot/<user_id>/<project_id>/<plot_id>", methods=["DELETE"])
+@cross_origin()
+def delete_plot(user_id: str, project_id: str, plot_id: str):
+    delete_plot_in_user_project(plot_id, user_id, project_id)
+    return {}

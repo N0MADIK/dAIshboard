@@ -91,10 +91,7 @@ def get_existing_plots(user_id: str, project_id: str):
         .order_by(PlotMetaData.id.desc())
         .distinct(PlotMetaData.plot_id)
     )
-    results_map = [
-        {"plot_id": pmd.plot_id, "plot_title": pmd.plot_title} for pmd in results
-    ]
-    return results_map
+    return results
 
 
 def get_latest_user_info_for_plot(plot_id: str, user_id: str, project_id: str):
@@ -106,3 +103,15 @@ def get_latest_user_info_for_plot(plot_id: str, user_id: str, project_id: str):
         .first()
     )
     return result
+
+
+def delete_plot_in_user_project(plot_id: str, user_id: str, project_id: str):
+    res = (
+        db.session.query(PlotMetaData)
+        .filter(PlotMetaData.user_id == user_id)
+        .filter(PlotMetaData.project_id == project_id)
+        .filter(PlotMetaData.plot_id == plot_id)
+        .delete()
+    )
+    db.session.commit()
+    return True

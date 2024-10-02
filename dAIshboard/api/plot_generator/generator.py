@@ -228,8 +228,11 @@ def create_new_plot(
 
 def check_existing_plot(user_query, user_id: str, project_id: str):
 
-    available_plot = get_existing_plots(user_id, project_id)
-
+    all_project_plots = get_existing_plots(user_id, project_id)
+    available_plot = [
+        {"plot_id": pmd.plot_id, "plot_title": pmd.plot_title}
+        for pmd in all_project_plots
+    ]
     # create prompt
     prompt = f"""User_request: {user_query}. 
     
@@ -528,7 +531,7 @@ def daishboard(
     error_message_update=None,
     error_code_update=None,
 ):
-    df_metadata = get_df_metadata(project_id, user_id)
+    df_metadata = get_df_metadata(user_id, project_id)
     if_existing = check_existing_plot(user_query, user_id, project_id)
     if not if_existing:
         print("Creating new plot")
@@ -560,6 +563,7 @@ def daishboard(
 
 def get_df_metadata(user_id: str, project_id: str):
     metadata = retrive_project_metadata(project_id, user_id)
+    print("HERER!!!", metadata, project_id, user_id)
     df_metadata = {}
     for md in metadata:
         k = md.name
