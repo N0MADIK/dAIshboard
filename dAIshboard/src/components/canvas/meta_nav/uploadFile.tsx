@@ -14,8 +14,11 @@ import { useState } from "react";
 import { axiosInstance } from "@/lib/utils";
 import { useParams } from 'react-router-dom'
 
+interface UploadFileDialogProps {
+    getProjectDataMetaData: () => void
+}
 
-export function UploadFileDialog() {
+export function UploadFileDialog(props: UploadFileDialogProps) {
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
@@ -43,6 +46,7 @@ export function UploadFileDialog() {
             let data = response.data;
             if (data.success === true) {
                 setError(`File uploaded successfully`);
+                props.getProjectDataMetaData();
                 setOpen(false);
             } else {
                 setError(`File upload failed: ${data.error}`);

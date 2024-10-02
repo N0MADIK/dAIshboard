@@ -4,18 +4,13 @@ import json
 from uuid import uuid4
 import inspect
 
-from .. import DATA_PATH, META_PATH
-
-stock = pd.read_excel(DATA_PATH + "Stock_Cluster.xlsx")
-product = pd.read_excel(DATA_PATH + "product.xlsx")
-sales = pd.read_excel(DATA_PATH + "sales_of_product.xlsx")
-googleplaystore = pd.read_csv(DATA_PATH + "googleplaystore.csv")
-
-
-df_metadata = {}
-
-with open(META_PATH + "df_metadata.json") as f:
-    df_metadata = json.load(f)
+from .. import DATA_PATH
+from ..database.utils import (
+    retrive_project_metadata,
+    add_plot_metadata,
+    get_existing_plots,
+    get_latest_user_info_for_plot,
+)
 
 
 # select the appropriate dataframe to use
@@ -87,11 +82,11 @@ def read_selected_dfs(selected_metadata):
     selected_dfs = {}
     data_path = DATA_PATH
     for filename in selected_metadata.keys():
-        if df_metadata[filename]["file_type"] == "xlsx":
+        if selected_metadata[filename]["file_type"] == "xlsx":
             filepath = data_path + filename + ".xlsx"
             df = pd.read_excel(filepath)
             selected_dfs[filename] = df
-        if df_metadata[filename]["file_type"] == "csv":
+        if selected_metadata[filename]["file_type"] == "csv":
             filepath = data_path + filename + ".csv"
             df = pd.read_csv(filepath)
             selected_dfs[filename] = df
@@ -138,34 +133,21 @@ def generate_new_code(
     return code
 
 
-def save_new_plot(
-    user_query, plot_code, plot_json, file_path=META_PATH + "plot_metadata.json"
-):
+def save_new_plot(user_query, plot_code, plot_json, user_id: str, project_id: str):
     plot_dict = json.loads(plot_json)
     plot_title = plot_dict["layout"]["title"]["text"]
     new_plot_id = str(uuid4())[:5]
-    with open(file_path, "r") as f:
-        plots = json.load(f)
-        new_plot = {
-            "plot_id": new_plot_id,
-            "plot_title": plot_title,
-            "user_query": user_query,
-            "plot_code": plot_code,
-            "plot_json": plot_json,
-        }
-        plots.append(new_plot)
-
-    # Save the file
-    with open(file_path, "w") as f:
-        json.dump(plots, f, indent=4)
-
+    add_plot_metadata(
+        new_plot_id, plot_title, user_query, plot_code, plot_json, user_id, project_id
+    )
     return new_plot_id
 
 
 def generate_new_plot(
     selected_metadata,
     user_query,
-    file_path=META_PATH + "plot_metadata.json",
+    user_id: str,
+    project_id: str,
     error_message_create=None,
     error_code_create=None,
 ):
@@ -200,7 +182,9 @@ def generate_new_plot(
             plot_json = code_generation_llm(*matched_args)
 
             # save plot
-            new_plot_id = save_new_plot(user_query, code, plot_json, file_path)
+            new_plot_id = save_new_plot(
+                user_query, code, plot_json, user_id, project_id
+            )
 
             return {"code": code, "plot_json": plot_json, "plot_id": new_plot_id}
 
@@ -219,7 +203,8 @@ def generate_new_plot(
 def create_new_plot(
     df_metadata,
     user_query,
-    file_path=META_PATH + "plot_metadata.json",
+    user_id: str,
+    project_id: str,
     error_message_create=None,
     error_code_create=None,
 ):
@@ -228,7 +213,8 @@ def create_new_plot(
         result = generate_new_plot(
             selected_metadata,
             user_query,
-            file_path,
+            user_id,
+            project_id,
             error_message_create,
             error_code_create,
         )
@@ -240,15 +226,9 @@ def create_new_plot(
         return {"error": "Failed to create a plot.", "error_message": error_message}
 
 
-def check_existing_plot(user_query, file_path="plot_metadata.json"):
+def check_existing_plot(user_query, user_id: str, project_id: str):
 
-    with open(file_path, "r") as f:
-        plot_metadata = json.load(f)
-
-    available_plot = [
-        {key: plot[key] for key in plot if key in ["plot_id", "plot_title"]}
-        for plot in plot_metadata
-    ]
+    available_plot = get_existing_plots(user_id, project_id)
 
     # create prompt
     prompt = f"""User_request: {user_query}. 
@@ -426,29 +406,18 @@ def save_updated_plot(
     update_id,
     updated_code,
     updated_plot_json,
-    file_path="plot_metadata.json",
+    old_plot,
 ):
     try:
-        # Load existing plots from file
-        with open(file_path, "r") as f:
-            plots = json.load(f)
-
-        # Find and update the correct plot
-        for plot in plots:
-            if plot["plot_id"] == update_id:
-                old_query = plot["user_query"]
-                updated_with_feedback = f"{old_query} \nUser Feedback: {new_user_query}"
-
-                plot["user_query"] = updated_with_feedback
-                plot["plot_code"] = updated_code
-                plot["plot_json"] = updated_plot_json
-                plot_updated = True
-                break
-
-        # Save the updated plots back to the file
-        with open(file_path, "w") as f:
-            json.dump(plots, f, indent=4)
-
+        add_plot_metadata(
+            update_id,
+            old_plot.plot_title,
+            new_user_query,
+            updated_code,
+            updated_plot_json,
+            old_plot.user_id,
+            old_plot.project_id,
+        )
     except Exception as e:
         return {
             "error": "Failed to save the updated plot info to metadata.",
@@ -461,7 +430,7 @@ def generate_updated_plot(
     new_user_query,
     old_code,
     update_id,
-    file_path="plot_metadata.json",
+    old_plot,
     error_message_update=None,
     error_code_update=None,
 ):
@@ -496,7 +465,7 @@ def generate_updated_plot(
 
             # save plot
             save_updated_plot(
-                new_user_query, update_id, updated_code, updated_plot_json
+                new_user_query, update_id, updated_code, updated_plot_json, old_plot
             )
 
             return {
@@ -521,27 +490,22 @@ def update_existing_plot(
     df_metadata,
     new_user_query,
     update_id,
-    file_path="plot_metadata.json",
+    user_id,
+    project_id,
     error_message_update=None,
     error_code_update=None,
 ):
 
-    with open(file_path, "r") as f:
-        plot_metadata = json.load(f)
-
     try:
-        for plot in plot_metadata:
-            if plot["plot_id"] == update_id:
-                old_code = plot["plot_code"]
-                old_user_query = plot["user_query"]
-
+        old_plot = get_latest_user_info_for_plot(update_id, user_id, project_id)
+        old_user_query, old_code = old_plot.user_query, old_plot.plot_code
         updated_metadata = update_dataframe(df_metadata, old_user_query, new_user_query)
         updated_result = generate_updated_plot(
             updated_metadata,
             new_user_query,
             old_code,
             update_id,
-            file_path,
+            old_plot,
             error_message_update,
             error_code_update,
         )
@@ -557,20 +521,24 @@ def update_existing_plot(
 
 def daishboard(
     user_query,
-    df_metadata,
-    file_path=META_PATH + "plot_metadata.json",
+    project_id,
+    user_id,
     error_message_create=None,
     error_code_create=None,
     error_message_update=None,
     error_code_update=None,
 ):
-
-    if_existing = check_existing_plot(user_query, file_path)
-
+    df_metadata = get_df_metadata(project_id, user_id)
+    if_existing = check_existing_plot(user_query, user_id, project_id)
     if not if_existing:
         print("Creating new plot")
         result = create_new_plot(
-            df_metadata, user_query, file_path, error_message_create, error_code_create
+            df_metadata,
+            user_query,
+            user_id,
+            project_id,
+            error_message_create,
+            error_code_create,
         )
         return result
 
@@ -582,13 +550,29 @@ def daishboard(
             df_metadata,
             user_query,
             id_to_update,
-            file_path,
+            user_id,
+            project_id,
             error_message_update,
             error_code_update,
         )
         return updated_result
 
 
-def generate_from_user_query(user_query: str):
-    result = daishboard(user_query, df_metadata)
+def get_df_metadata(user_id: str, project_id: str):
+    metadata = retrive_project_metadata(project_id, user_id)
+    df_metadata = {}
+    for md in metadata:
+        k = md.name
+        v = {
+            "file_type": md.file_type,
+            "columns": json.loads(md.columns),
+            "types": json.loads(md.types),
+            "sample_data": json.loads(md.sample_data),
+        }
+        df_metadata.setdefault(k, v)
+    return df_metadata
+
+
+def generate_from_user_query(user_query: str, user_id: str, project_id: str):
+    result = daishboard(user_query, project_id, user_id)
     return result

@@ -16,7 +16,7 @@ export function MetaNav() {
     const [projectMeta, setProjectMeta] = useState<FileItem[]>([]);
     const { user_id, project_id } = useParams()
 
-    useEffect(() => {
+    const getProjectDataMetaData = () => {
         let url = `/projects/${user_id}/${project_id}/metadata`
         let Metadata: FileItem[] = []
         axiosInstance.get(url).then((response) => {
@@ -30,6 +30,9 @@ export function MetaNav() {
             Metadata.push(dataBlock as FileItem);
             setProjectMeta(Metadata);
         })
+    }
+    useEffect(() => {
+        getProjectDataMetaData();
     }, [])
     return <div>
         <Popover>
@@ -37,7 +40,7 @@ export function MetaNav() {
                 <Button>Menu</Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 bg-blue-500">
-                <UploadFileDialog />
+                <UploadFileDialog getProjectDataMetaData={getProjectDataMetaData} />
                 <FileExplorer items={projectMeta} />
             </PopoverContent>
         </Popover>

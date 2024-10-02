@@ -2,7 +2,7 @@ from flask import Flask, request
 from flask_cors import CORS, cross_origin
 
 from .plot_generator.generator import generate_from_user_query
-from .utils import get_project_metadata
+from .utils import get_project_metadata, add_project_data
 from .database import db
 from .database.utils import get_user, add_user, get_projects, add_project
 from pathlib import Path
@@ -91,7 +91,13 @@ def get_canvas_metadata(user_id: str, project_id: str):
 @cross_origin()
 def upload_data(user_id: str, project_id: str):
     request_file = request.files.get("file")
-    return {"success": True, "error": ""}
+    success, error = False, ""
+    try:
+        if request_file:
+            success = add_project_data(request_file, user_id, project_id)
+    except Exception as e:
+        error = str(e)
+    return {"success": success, "error": error}
 
 
 @app.route("/generate_plot/<user_id>/<project_id>", methods=["POST"])
@@ -100,6 +106,6 @@ def generate(user_id: str, project_id: str):
     request_body = request.json
     user_query = request_body.get("user_query", "")
     if user_query:
-        return_json = generate_from_user_query(user_query)
+        return_json = generate_from_user_query(user_query, user_id, project_id)
         return return_json
     return {"error": "No user query"}
