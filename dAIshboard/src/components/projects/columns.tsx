@@ -1,6 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table"
-import { UserContext } from "@/lib/utils";
-import { useContext } from 'react';
+import { useParams } from 'react-router-dom'
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
@@ -16,8 +15,9 @@ interface IDCellProps {
 }
 
 function IDCell(props: IDCellProps) {
-    const { user_data } = useContext(UserContext);
-    const url = `/canvas/${user_data.id}/${props.project_id}`
+
+    const { user_id } = useParams()
+    const url = `/canvas/${user_id}/${props.project_id}`
     return <a href={url}>{props.project_id}</a>
 }
 

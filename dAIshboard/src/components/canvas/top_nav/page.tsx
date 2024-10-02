@@ -10,6 +10,7 @@ export function TopNav() {
     const { user_id } = useParams()
     const navigate = useNavigate();
     const goToProjects = () => {
+
         let url = `/projects/${user_id}`
         navigate(url);
     }

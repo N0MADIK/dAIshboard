@@ -16,6 +16,9 @@ export function Display() {
     let [error, setError] = useState<string | null>(null);
 
     const removePlot = () => {
+        for (var p of plots) {
+            removePlotAt(p);
+        }
         setPlots([])
     }
 

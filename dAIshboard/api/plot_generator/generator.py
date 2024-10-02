@@ -563,7 +563,6 @@ def daishboard(
 
 def get_df_metadata(user_id: str, project_id: str):
     metadata = retrive_project_metadata(project_id, user_id)
-    print("HERER!!!", metadata, project_id, user_id)
     df_metadata = {}
     for md in metadata:
         k = md.name
