@@ -1,22 +1,23 @@
 # dAIshboard 
+
 ## Table of Content
 1. [Introduction](#introduction)
-    a. [Business Use Case](#bc)
-    b. [Product Introduction](#pi)
+   - [Business Use Case](#bc)  
+   - [Product Introduction](#pi)  
 2. [Installation](#installation)
-    a. [Node](#node)
-    b. [Yarn](#yarn)
-    c. [Vite](#vite)
-    d. [Python](#python)
-    e. [Flask](#flask)
+   - [Node](#node)  
+   - [Yarn](#yarn)  
+   - [Vite](#vite)  
+   - [Python](#python)  
+   - [Flask](#flask)  
 3. [Usage](#usage)
-    a. [Start](#start)
-    b. [Create a User and Login](#user)
-    c. [Create a Project](#project)
-    d. [Create a Plot](#create)
-    e. [Modify a Plot](#modify)
-    f. [Delete a Plot](#delete)
-4. [Future Work](#fw)
+   - [Start](#start)  
+   - [Create a User and Login](#user)  
+   - [Create a Project](#project)  
+   - [Create a Plot](#create)  
+   - [Modify a Plot](#modify)  
+   - [Delete a Plot](#delete)  
+4. [Future Work](#fw)  
 
 ## Introduction <a name="introduction"></a>
 ### <U>Business Use Case</u><a name="bc"></a>
