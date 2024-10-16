@@ -52,16 +52,25 @@ def add_project_data(file: object, user_id: str, project_id: str):
     df, dtype = None, ""
     tokens = fname.split(".")
     dtype = tokens.pop(-1)
-    name = ".".join(tokens)
+    name = ".".join(["_".join(x.split(" ")) for x in tokens])
     if ".xlsx" in fname:
-        df = pd.read_excel(BytesIO(file.read()))
+        df_dict = pd.read_excel(BytesIO(file.read()), sheet_name=None)
         dtype = "xlsx"
-        df.to_excel(DATA_PATH + fname, index=False)
+        if len(df_dict) == 1:
+            df = list(df_dict.values())[0]
+            df.to_excel(DATA_PATH + name + "." + dtype, index=False)
+            add_data_metadata(df, name, dtype, user_id, project_id)
+        else:
+            for n, ndf in df_dict.items():
+                n_tokens = n.split(" ")
+                n_name = "_".join(n_tokens)
+                ndf.to_excel(DATA_PATH + n_name + "." + dtype, index=False)
+                add_data_metadata(ndf, n_name, dtype, user_id, project_id)
+        return True
     elif ".csv" in fname:
         df = pd.read_csv(BytesIO(file.read()))
         dtype = "csv"
         df.to_csv(DATA_PATH + fname, index=False)
-    if df is None:
-        return False
-    add_data_metadata(df, name, dtype, user_id, project_id)
-    return True
+        add_data_metadata(df, name, dtype, user_id, project_id)
+        return True
+    return False
