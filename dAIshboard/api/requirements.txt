@@ -1,0 +1,12 @@
+click==8.0.1
+Flask
+gunicorn==22.0.0
+itsdangerous==2.0.1
+Jinja2==3.1.3
+MarkupSafe
+python-dotenv==0.17.1
+Werkzeug==2.2.3
+Flask-SQLAlchemy==3.1.1
+pandas
+openpyxl
+openai
