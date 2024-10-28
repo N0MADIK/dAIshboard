@@ -1,3 +1,8 @@
+"""
+Backend Flask API Server for dAIshboard
+"""
+
+from pathlib import Path
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 
@@ -12,7 +17,6 @@ from .database.utils import (
     get_existing_plots,
     delete_plot_in_user_project,
 )
-from pathlib import Path
 
 app = Flask(__name__, static_folder="../build", static_url_path="/")
 cors = CORS(app)
@@ -25,18 +29,36 @@ with app.app_context():
 
 
 @app.errorhandler(404)
-def not_found(e):
+def not_found(_: object) -> object:
+    """
+        Gets call when a page is not found
+    Args:
+        _ (object): Error
+
+    Returns:
+        object: HTML page to show when other pages fail
+    """
     return app.send_static_file("index.html")
 
 
 @app.route("/")
 def index():
+    """
+    First page to show when people come to the frontend
+    Returns:
+        object: HTML page to show when other pages fail
+    """
     return app.send_static_file("index.html")
 
 
 @app.route("/register", methods=["POST"])
 @cross_origin()
-def register_user():
+def register_user() -> dict:
+    """
+        POST endpoint to allow new users to be registeted
+    Returns:
+        dict: Success or failure information
+    """
     request_body = request.json
     name = request_body.get("name", "")
     email = request_body.get("email", "")
@@ -53,7 +75,12 @@ def register_user():
 
 @app.route("/login", methods=["POST"])
 @cross_origin()
-def login():
+def login() -> dict:
+    """
+        POST endpoint to allow users to login
+    Returns:
+        dict: Success or failure information
+    """
     request_body = request.json
     email = request_body.get("email", "")
     password = request_body.get("password", "")
@@ -65,7 +92,12 @@ def login():
 
 @app.route("/projects/<user_id>", methods=["GET"])
 @cross_origin()
-def get_projects_list(user_id: str):
+def get_projects_list(user_id: str) -> list[dict]:
+    """
+        GET endpoint to get list of all projects for given user
+    Returns:
+        list[dict]: List of projects for given user or failure information
+    """
     projects = get_projects(user_id)
     return_dict = [
         {"id": p.id, "owner": p.user.name, "name": p.name, "created_on": p.created_on}
@@ -76,7 +108,15 @@ def get_projects_list(user_id: str):
 
 @app.route("/projects/<user_id>/add", methods=["POST"])
 @cross_origin()
-def add_new_project_to_user(user_id: str):
+def add_new_project_to_user(user_id: str) -> dict:
+    """
+        POST call to add a new project to give user
+    Args:
+        user_id (str): User ID
+
+    Returns:
+        dict: Success or failure information
+    """
     request_body = request.json
     success, error = False, ""
     try:
@@ -88,7 +128,16 @@ def add_new_project_to_user(user_id: str):
 
 @app.route("/projects/<user_id>/<project_id>/metadata", methods=["GET"])
 @cross_origin()
-def get_canvas_metadata(user_id: str, project_id: str):
+def get_canvas_metadata(user_id: str, project_id: str) -> dict:
+    """
+        GET call to get the metadata for given user and project
+    Args:
+        user_id (str): User ID
+        project_id (str): Project ID
+
+    Returns:
+        dict: Metadata for user and project
+    """
     return_obj = {"data": [], "error": ""}
     return_obj["data"] = get_project_metadata(project_id, user_id)
     return return_obj
@@ -96,7 +145,17 @@ def get_canvas_metadata(user_id: str, project_id: str):
 
 @app.route("/upload/data/<user_id>/<project_id>", methods=["POST"])
 @cross_origin()
-def upload_data(user_id: str, project_id: str):
+def upload_data(user_id: str, project_id: str) -> dict:
+    """
+        POST call to upload new data for given project and user
+
+    Args:
+        user_id (str): User ID
+        project_id (str): Project ID
+
+    Returns:
+        dict: Success or failure information
+    """
     request_file = request.files.get("file")
     success, error = False, ""
     try:
@@ -109,7 +168,16 @@ def upload_data(user_id: str, project_id: str):
 
 @app.route("/generate_plot/<user_id>/<project_id>", methods=["POST"])
 @cross_origin()
-def generate(user_id: str, project_id: str):
+def generate(user_id: str, project_id: str) -> dict:
+    """
+        POST call to generate a plot
+    Args:
+        user_id (str): User ID
+        project_id (str): Project ID
+
+    Returns:
+        dict: Plot information that is generated or Error if any
+    """
     request_body = request.json
     user_query = request_body.get("user_query", "")
     if user_query:
@@ -120,15 +188,33 @@ def generate(user_id: str, project_id: str):
 
 @app.route("/all_plots/<user_id>/<project_id>", methods=["GET"])
 @cross_origin()
-def get_all_plots(user_id: str, project_id: str):
+def get_all_plots(user_id: str, project_id: str) -> list[dict]:
+    """
+        GET call to retrive all plots for a given user and project
+    Args:
+        user_id (str): User ID
+        project_id (str): Project ID
+
+    Returns:
+        list[dict]: List of existing plots
+    """
     all_plots = get_existing_plots(user_id, project_id)
     plot_jsons = [{"id": p.plot_id, "json": p.plot_json} for p in all_plots]
-    print(len(plot_jsons))
     return plot_jsons
 
 
 @app.route("/delete_plot/<user_id>/<project_id>/<plot_id>", methods=["DELETE"])
 @cross_origin()
-def delete_plot(user_id: str, project_id: str, plot_id: str):
+def delete_plot(user_id: str, project_id: str, plot_id: str) -> dict:
+    """
+        Delete a plot from given user and project
+    Args:
+        user_id (str): User ID
+        project_id (str): Project ID
+        plot_id (str): Plot ID
+
+    Returns:
+        dict: Success or failure information
+    """
     delete_plot_in_user_project(plot_id, user_id, project_id)
     return {}
