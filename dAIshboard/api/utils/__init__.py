@@ -1,11 +1,24 @@
+"""
+Utility Functions
+"""
+
 import json
-import pandas as pd
 from io import BytesIO
+import pandas as pd
 from .. import DATA_PATH
 from ..database.utils import add_data_metadata, retrive_project_metadata
 
 
-def get_project_metadata(project_id: str, user_id: str):
+def get_project_metadata(project_id: str, user_id: str) -> list[dict]:
+    """
+        Get the data metadata for given project and user
+    Args:
+        project_id (str): Project ID
+        user_id (str): User ID
+
+    Returns:
+        list[dict]: List of metadata organized for easy consumption by frontend
+    """
     project_metadata = retrive_project_metadata(project_id, user_id)
     data = []
     for pmd in project_metadata:
@@ -47,7 +60,17 @@ def get_project_metadata(project_id: str, user_id: str):
     return data
 
 
-def add_project_data(file: object, user_id: str, project_id: str):
+def add_project_data(file: object, user_id: str, project_id: str) -> bool:
+    """
+        Add new data to given user and project
+    Args:
+        file (object): Data file to add
+        user_id (str): User ID
+        project_id (str): Project ID
+
+    Returns:
+        bool: True if successful else False
+    """
     fname = file.filename
     df, dtype = None, ""
     tokens = fname.split(".")
@@ -67,7 +90,7 @@ def add_project_data(file: object, user_id: str, project_id: str):
                 ndf.to_excel(DATA_PATH + n_name + "." + dtype, index=False)
                 add_data_metadata(ndf, n_name, dtype, user_id, project_id)
         return True
-    elif ".csv" in fname:
+    if ".csv" in fname:
         df = pd.read_csv(BytesIO(file.read()))
         dtype = "csv"
         df.to_csv(DATA_PATH + fname, index=False)

@@ -1,8 +1,12 @@
-import pandas as pd
-import openai
+"""
+Module containing code to generate the plots
+"""
+
 import json
 from uuid import uuid4
 import inspect
+
+import pandas as pd
 
 from langchain.chains import LLMChain
 from langchain_openai import ChatOpenAI
@@ -17,12 +21,23 @@ from ..database.utils import (
     get_latest_user_info_for_plot,
 )
 
+
 # Choose the LLM
-def choose_llm(model_name="openai"):
+def choose_llm(model_name="openai") -> object:
+    """
+        Choose LLM model based on the model name
+    Args:
+        model_name (str, optional): Name of the LLM model to use. Defaults to "openai".
+
+    Raises:
+        ValueError: If no model with name exists
+
+    Returns:
+        object: LLM model to use
+    """
     if model_name == "openai":
         return ChatOpenAI(model="gpt-4o-mini")
-    else:
-        raise ValueError("Unsupported model name.")
+    raise ValueError("Unsupported model name.")
 
 
 # Generate new plot
@@ -57,12 +72,22 @@ The output should be code ONLY that can be directly used without any processing.
 {error_message}
 """
 
+
 ## select the appropriate dataframe to use
 def select_dataframe(
-    df_metadata, 
-    user_query, 
-    model_name="openai"
-):
+    df_metadata: dict, user_query: str, model_name: str = "openai"
+) -> dict:
+    """
+    Select the dataframes required to process the user request
+
+    Args:
+        df_metadata (dict) -> Metadata of available data
+        user_query (str) -> User query
+        model_name (str, optional): Name of the LLM model to use. Defaults to "openai"
+
+    Returns:
+        dict: Selected Metadata or Error if any
+    """
     llm = choose_llm(model_name)
     dataset_selection_template = PromptTemplate.from_template(DATASET_SELECTION_PROMPT)
     selection_chain = LLMChain(llm=llm, prompt=dataset_selection_template)
@@ -86,14 +111,27 @@ def select_dataframe(
             Output: {result}
             Error: {error_message}
             """
-            correction_chain = LLMChain(llm=llm, prompt=PromptTemplate.from_template(correction_prompt))
+            correction_chain = LLMChain(
+                llm=llm, prompt=PromptTemplate.from_template(correction_prompt)
+            )
             result = correction_chain.run()
 
-    return {"error": "Failed to obtain a list of dataframes to use.", "error_message": error_message}
+    return {
+        "error": "Failed to obtain a list of dataframes to use.",
+        "error_message": error_message,
+    }
 
 
 ## Read selected datasets; xls, xlsx, xlsm etc. Specify in frontend
-def read_selected_dfs(selected_metadata):
+def read_selected_dfs(selected_metadata: dict) -> dict:
+    """
+        Read the selected dataframes
+    Args:
+        selected_metadata (dict): Dict of selected dataframe metadata
+
+    Returns:
+        dict: Dict with same key as input but value is dataframe
+    """
     selected_dfs = {}
     data_path = DATA_PATH
     for filename in selected_metadata.keys():
@@ -110,11 +148,11 @@ def read_selected_dfs(selected_metadata):
 
 ## generate code to create a new plot
 def generate_new_code(
-    selected_metadata, 
-    user_query, 
-    model_name="openai", 
-    error_message_create=None, 
-    error_code_create=None
+    selected_metadata,
+    user_query,
+    model_name="openai",
+    error_message_create=None,
+    error_code_create=None,
 ):
     llm = choose_llm(model_name)
     coding_template = PromptTemplate.from_template(CODE_GENERATION_PROMPT)
@@ -123,23 +161,20 @@ def generate_new_code(
     prompt_data = {
         "user_query": user_query,
         "selected_metadata": selected_metadata,
-        "error_message": ""
+        "error_message": "",
     }
     if error_message_create and error_code_create:
-        prompt_data["error_message"] = f"This is the error code: \n{error_code_create} \nThe following error occurred when running the code: {error_message_create}."
-    
+        prompt_data["error_message"] = (
+            f"This is the error code: \n{error_code_create} \nThe following error occurred when running the code: {error_message_create}."
+        )
+
     raw_code = code_chain.run(prompt_data)
 
     return raw_code
 
+
 ## save the new plot
-def save_new_plot(
-    user_query, 
-    plot_code, 
-    plot_json, 
-    user_id: str, 
-    project_id: str
-):
+def save_new_plot(user_query, plot_code, plot_json, user_id: str, project_id: str):
     plot_dict = json.loads(plot_json)
     plot_title = plot_dict["layout"]["title"]["text"]
     new_plot_id = str(uuid4())[:5]
@@ -147,6 +182,7 @@ def save_new_plot(
         new_plot_id, plot_title, user_query, plot_code, plot_json, user_id, project_id
     )
     return new_plot_id
+
 
 ## generate the new plot
 def generate_new_plot(
@@ -162,7 +198,11 @@ def generate_new_plot(
     selected_dfs = read_selected_dfs(selected_metadata)
 
     raw_code = generate_new_code(
-        selected_metadata, user_query, model_name, error_message_create, error_code_create
+        selected_metadata,
+        user_query,
+        model_name,
+        error_message_create,
+        error_code_create,
     )
 
     # Retry up to 3 times
@@ -206,6 +246,7 @@ def generate_new_plot(
         "error_message": error_message_new,
     }
 
+
 ## Create a new plot - put all together
 def create_new_plot(
     df_metadata,
@@ -213,9 +254,23 @@ def create_new_plot(
     user_id: str,
     project_id: str,
     model_name="openai",
-    error_message_create=None,
-    error_code_create=None,
-):
+    error_message_create: object = None,
+    error_code_create: object = None,
+) -> dict:
+    """
+        Create a new plot
+    Args:
+        df_metadata (_type_): Avaialble Data Metadata
+        user_query (_type_): User Query
+        user_id (str): User ID
+        project_id (str): Project ID
+        model_name (str, optional): Name of the Model. Defaults to "openai".
+        error_message_create (object, optional): Used when error occurs. Defaults to None.
+        error_code_create (object, optional): Used when error occurs. Defaults to None.
+
+    Returns:
+        dict: Plot as json that can be consumed by the frontend
+    """
     try:
         selected_metadata = select_dataframe(df_metadata, user_query, model_name)
         result = generate_new_plot(
@@ -270,7 +325,21 @@ The output should be code ONLY that can be directly used without any processing.
 
 
 ## check if a plot exist or not
-def check_existing_plot(user_query, user_id: str, project_id: str, model_name="openai"):
+def check_existing_plot(
+    user_query: str, user_id: str, project_id: str, model_name: str = "openai"
+) -> dict:
+    """
+    Check if user query is talking about new or existing plot
+
+    Args:
+        user_query: str - User query
+        user_id: str - User ID
+        project_id: str - Project ID
+        model_name (str, optional): Name of the Model. Defaults to "openai".
+
+    Returns:
+        dict - Existing plot if exists else None or Error if any
+    """
     all_project_plots = get_existing_plots(user_id, project_id)
     available_plot = [
         {"plot_id": pmd.plot_id, "plot_title": pmd.plot_title}
@@ -278,10 +347,14 @@ def check_existing_plot(user_query, user_id: str, project_id: str, model_name="o
     ]
 
     llm = choose_llm(model_name)
-    check_existing_plot_template = PromptTemplate.from_template(CHECK_EXISTING_PLOT_PROMPT)
+    check_existing_plot_template = PromptTemplate.from_template(
+        CHECK_EXISTING_PLOT_PROMPT
+    )
     check_existing_plot_chain = LLMChain(llm=llm, prompt=check_existing_plot_template)
-    
-    result = check_existing_plot_chain.run({"user_query": user_query, "available_plot": available_plot})
+
+    result = check_existing_plot_chain.run(
+        {"user_query": user_query, "available_plot": available_plot}
+    )
 
     for _ in range(3):
         try:
@@ -305,7 +378,9 @@ def check_existing_plot(user_query, user_id: str, project_id: str, model_name="o
             Error: {error_message}
             """
 
-            correction_chain = LLMChain(llm=llm, prompt=PromptTemplate.from_template(correction_prompt))
+            correction_chain = LLMChain(
+                llm=llm, prompt=PromptTemplate.from_template(correction_prompt)
+            )
             result = correction_chain.run({"output": result, "error": error_message})
 
     return {
@@ -315,11 +390,31 @@ def check_existing_plot(user_query, user_id: str, project_id: str, model_name="o
 
 
 # select the appropriate dataframe to use
-def update_dataframe(df_metadata, old_user_query, new_user_query, model_name="openai"):
+def update_dataframe(
+    df_metadata: dict, old_user_query: str, new_user_query: str, model_name="openai"
+) -> dict:
+    """
+    Select the dataframes to update the plot using
+
+    Args:
+        df_metadata: dict - Metadata of the data available to use
+        old_user_query: str - Old user query
+        new_user_query: str - New user query
+        model_name (str, optional): Name of the Model. Defaults to "openai"
+
+    Returns:
+        dict - Return the data to use to update the plot or Error if any
+    """
     llm = choose_llm(model_name)
     update_dataframe_template = PromptTemplate.from_template(UPDATE_DATAFRAME_PROMPT)
     update_dataframe_chain = LLMChain(llm=llm, prompt=update_dataframe_template)
-    result = update_dataframe_chain.run({"old_user_query": old_user_query, "new_user_query": new_user_query, "df_metadata": df_metadata})
+    result = update_dataframe_chain.run(
+        {
+            "old_user_query": old_user_query,
+            "new_user_query": new_user_query,
+            "df_metadata": df_metadata,
+        }
+    )
 
     for _ in range(3):
         try:
@@ -342,7 +437,9 @@ def update_dataframe(df_metadata, old_user_query, new_user_query, model_name="op
     
             """
 
-            correction_chain = LLMChain(llm=llm, prompt=PromptTemplate.from_template(correction_prompt))
+            correction_chain = LLMChain(
+                llm=llm, prompt=PromptTemplate.from_template(correction_prompt)
+            )
             result = correction_chain.run({"output": result, "error": error_message})
 
     return {
@@ -352,38 +449,63 @@ def update_dataframe(df_metadata, old_user_query, new_user_query, model_name="op
 
 
 def update_code(
-    new_user_query,
-    old_code,
-    updated_metadata,
-    model_name="openai",
-    error_message_update=None,
-    error_code_update=None,
+    new_user_query: str,
+    old_code: str,
+    updated_metadata: dict,
+    model_name: str = "openai",
+    error_message_update: object = None,
+    error_code_update: object = None,
 ):
+    """
+    Update the code of the plot based on new user query
+
+    Args:
+        new_user_query: str - New user query
+        old_code: str - Code used to generate the current plot
+        updated_metadata: dict - New dataset that can be used to generate the new plot
+        model_name (str, optional): Name of the Model. Defaults to "openai".
+        error_message_update (object, optional): Used when error occurs. Defaults to None.
+        error_code_update (object, optional): Used when error occurs. Defaults to None.
+    """
     llm = choose_llm(model_name)
     update_code_template = PromptTemplate.from_template(UPDATE_CODE_PROMPT)
     update_code_chain = LLMChain(llm=llm, prompt=update_code_template)
 
     prompt_data = {
-        "new_user_query": new_user_query, 
-        "old_code": old_code, 
+        "new_user_query": new_user_query,
+        "old_code": old_code,
         "updated_metadata": updated_metadata,
-        'error_message': ''
+        "error_message": "",
     }
 
     if error_message_update and error_code_update:
-        prompt_data["error_message"] = f"""This is the error code: \n{error_code_update} \nThe following error occurred when running the code: {error_message_update}. \nPlease modify the code to fix the issue."""
+        prompt_data["error_message"] = (
+            f"""This is the error code: \n{error_code_update} \nThe following error occurred when running the code: {error_message_update}. \nPlease modify the code to fix the issue."""
+        )
 
     code = update_code_chain.run(prompt_data)
     return code
 
 
 def save_updated_plot(
-    new_user_query,
-    update_id,
-    updated_code,
-    updated_plot_json,
-    old_plot,
-):
+    new_user_query: str,
+    update_id: str,
+    updated_code: str,
+    updated_plot_json: str,
+    old_plot: object,
+) -> dict:
+    """
+        Save updated plot
+    Args:
+        new_user_query (str): New query used to update existing plot
+        update_id (str): Plot ID
+        updated_code (str): Code used to generate the new plot
+        updated_plot_json (str): Updated plot as JSON
+        old_plot (object): Old Plot
+
+    Returns:
+        dict: Error if any
+    """
     try:
         add_plot_metadata(
             update_id,
@@ -402,19 +524,39 @@ def save_updated_plot(
 
 
 def generate_updated_plot(
-    updated_metadata,
-    new_user_query,
-    old_code,
-    update_id,
-    old_plot,
-    model_name="openai",
-    error_message_update=None,
-    error_code_update=None,
-):
+    updated_metadata: dict,
+    new_user_query: str,
+    old_code: str,
+    update_id: str,
+    old_plot: object,
+    model_name: str = "openai",
+    error_message_update: object = None,
+    error_code_update: object = None,
+) -> dict:
+    """
+        Function generate a new plot updating an existing one
+    Args:
+        updated_metadata (dict): New data to use
+        new_user_query (str): New user query
+        old_code (str): Code used to generate current plot
+        update_id (str): Plot ID to update
+        old_plot (object): Old Plot
+        model_name (str, optional): Name of the Model. Defaults to "openai".
+        error_message_update (object, optional): Used when error occurs. Defaults to None.
+        error_code_update (object, optional): Used when error occurs. Defaults to None.
+
+    Returns:
+        dict: Error if any
+    """
     # First attempt
     updated_selected_dfs = read_selected_dfs(updated_metadata)
     updated_raw_code = update_code(
-        new_user_query, old_code, updated_metadata, model_name, error_message_update, error_code_update
+        new_user_query,
+        old_code,
+        updated_metadata,
+        model_name,
+        error_message_update,
+        error_code_update,
     )
 
     # Retry up to 3 times
@@ -454,7 +596,12 @@ def generate_updated_plot(
         except Exception as e:
             error_message_update = str(e)
             updated_raw_code = update_code(
-                new_user_query, old_code, updated_metadata, model_name, error_message_update, updated_code
+                new_user_query,
+                old_code,
+                updated_metadata,
+                model_name,
+                error_message_update,
+                updated_code,
             )
 
     return {
@@ -464,20 +611,38 @@ def generate_updated_plot(
 
 
 def update_existing_plot(
-    df_metadata,
-    new_user_query,
-    update_id,
-    user_id,
-    project_id,
-    model_name="openai",
-    error_message_update=None,
-    error_code_update=None,
-):
+    df_metadata: dict,
+    new_user_query: str,
+    update_id: str,
+    user_id: str,
+    project_id: str,
+    model_name: str = "openai",
+    error_message_update: object = None,
+    error_code_update: object = None,
+) -> dict:
+    """
+    Function to update existing plot
+
+    Args:
+        df_metadata (dict): Potential Data we can use to make the update
+        new_user_query (str): New user query
+        update_id (str): Plot ID to update
+        user_id (str): User ID
+        project_id (str): Project ID
+        model_name (str, optional): Name of the Model. Defaults to "openai".
+        error_message_update (object, optional): Used when error occurs. Defaults to None.
+        error_code_update (object, optional): Used when error occurs. Defaults to None.
+
+    Returns:
+        dict: New Plot after updating or Error if any
+    """
 
     try:
         old_plot = get_latest_user_info_for_plot(update_id, user_id, project_id)
         old_user_query, old_code = old_plot.user_query, old_plot.plot_code
-        updated_metadata = update_dataframe(df_metadata, old_user_query, new_user_query, model_name)
+        updated_metadata = update_dataframe(
+            df_metadata, old_user_query, new_user_query, model_name
+        )
         updated_result = generate_updated_plot(
             updated_metadata,
             new_user_query,
@@ -499,15 +664,31 @@ def update_existing_plot(
 
 
 def daishboard(
-    user_query,
-    project_id,
-    user_id,
-    model_name="openai",
-    error_message_create=None,
-    error_code_create=None,
-    error_message_update=None,
-    error_code_update=None,
-):
+    user_query: str,
+    project_id: str,
+    user_id: str,
+    model_name: str = "openai",
+    error_message_create: object = None,
+    error_code_create: object = None,
+    error_message_update: object = None,
+    error_code_update: object = None,
+) -> dict:
+    """
+        Function to generate or update plot
+
+    Args:
+        user_query (str): User Query
+        project_id (str): Project ID
+        user_id (str): User ID
+        model_name (str, optional): Name of the LLM to use. Defaults to "openai".
+        error_message_create (object, optional): Used when error occurs. Defaults to None.
+        error_code_create (object, optional): Used when error occurs. Defaults to None.
+        error_message_update (object, optional): Used when error occurs. Defaults to None.
+        error_code_update (object, optional): Used when error occurs. Defaults to None.
+
+    Returns:
+        dict: New Plot or Error if any
+    """
     df_metadata = get_df_metadata(user_id, project_id)
     if_existing = check_existing_plot(user_query, user_id, project_id, model_name)
     if not if_existing:
@@ -523,24 +704,33 @@ def daishboard(
         )
         return result
 
-    else:
-        print("Updating a plot")
-        id_to_update = if_existing[0]
-        print(id_to_update)
-        updated_result = update_existing_plot(
-            df_metadata,
-            user_query,
-            id_to_update,
-            user_id,
-            project_id,
-            model_name,
-            error_message_update,
-            error_code_update,
-        )
-        return updated_result
+    print("Updating a plot")
+    id_to_update = if_existing[0]
+    print(id_to_update)
+    updated_result = update_existing_plot(
+        df_metadata,
+        user_query,
+        id_to_update,
+        user_id,
+        project_id,
+        model_name,
+        error_message_update,
+        error_code_update,
+    )
+    return updated_result
 
 
-def get_df_metadata(user_id: str, project_id: str):
+def get_df_metadata(user_id: str, project_id: str) -> dict:
+    """
+    Get the metadata of data available for given user and project
+
+    Args:
+        user_id (str): User ID
+        project_id (str): Project ID
+
+    Returns:
+        dict: Metadata of the data available for this project and user
+    """
     metadata = retrive_project_metadata(project_id, user_id)
     df_metadata = {}
     for md in metadata:
@@ -555,6 +745,20 @@ def get_df_metadata(user_id: str, project_id: str):
     return df_metadata
 
 
-def generate_from_user_query(user_query: str, user_id: str, project_id: str, model_name = "openai"):
+def generate_from_user_query(
+    user_query: str, user_id: str, project_id: str, model_name="openai"
+) -> dict:
+    """
+        Entry point function to start generating a plot using LLM
+
+    Args:
+        user_query (str): User Query
+        user_id (str): User ID
+        project_id (str): Project ID
+        model_name (str, optional): Name of the LLM to use. Defaults to "openai".
+
+    Returns:
+        dict: Plot information or Error if any
+    """
     result = daishboard(user_query, project_id, user_id, model_name)
     return result
